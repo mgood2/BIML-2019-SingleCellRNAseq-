@@ -1,0 +1,11 @@
+focused on sample QC
+
+1. Dropletutils (empty drop filtering)
+2. QC by multiple filters (mt_percentage, total counts, total features, etc...)
+
+After QC
+1. Normalization
+2. Feature selection
+3. Clustering
+4. DE analaysis (cluster specific marker analysis)
+5. Downstream analysis (cell type annotation: singleR)
