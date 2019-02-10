@@ -1,0 +1,7 @@
+Start with Rawcount matrix 
+
+1. QC (cell filtering)
+2. Normalization
+3. Feature selection
+4. Clustering
+5. Differential expression analysis (Find markers)
