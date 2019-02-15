@@ -1,0 +1,5 @@
+# Gene expression signature analysis 
+
+# AUCell: Analysis of 'gene set' activity in single-cell RNA-seq data (e.g. identify cells with specific gene signatures)
+
+# reference GMT file was downloaded from msigdb (http://software.broadinstitute.org/gsea/msigdb)
