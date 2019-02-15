@@ -1,6 +1,9 @@
 # BIML data processing
 
 # 1. load data (output of 10X genomics)
+# This dataset passed all QC filters
+# Just use the dataset for basic and downstream analysis
+
 library(DropletUtils)
 
 PATH_raw = "/BiO/data/scRNAseq_dataset/memory_Tcell/RawData/"
@@ -8,6 +11,7 @@ PATH_raw = "/BiO/data/scRNAseq_dataset/memory_Tcell/RawData/"
 sce <- read10xCounts(PATH_raw)
 colnames(sce) <- colData(sce)$Barcode
 
+# Data Normalization
 library(scran)
 clusters <- quickCluster(sce, method="igraph") # for convergence.
 table(clusters)
@@ -60,12 +64,13 @@ Seuratset <- RunTSNE(Seuratset, dims.use = 1:15,
 
 Seuratset <- RunUMAP(object = Seuratset, reduction.use = "pca", dims.use = 1:15, min_dist = 0.75)
 
-
+# Clustering
 Seuratset <- FindClusters(Seuratset, reduction.type="pca",
                           dims.use = 1:15, save.SNN = TRUE,
                           force.recalc = TRUE)
 
 
+# Visualization
 PCAPlot(Seuratset)
 TSNEPlot(Seuratset, do.label = TRUE, pt.size = 0.05)
 DimPlot(Seuratset, reduction.use = "pca", do.label = TRUE)
@@ -122,20 +127,23 @@ tibble(x = Seuratset@dr$tsne@cell.embeddings[,1],
         axis.text.x = element_text(size=10)
   )
 
+# Find markergenes by each clusters (find cluster specific marker genes)
 markerGenes <- FindAllMarkers(Seuratset)
 head(markerGenes[order(markerGenes[,"cluster"], markerGenes[,"p_val_adj"], -markerGenes[,"avg_logFC"]), ])
 markerGenes_reordered <- markerGenes[order(markerGenes[,"cluster"], markerGenes[,"p_val_adj"], -markerGenes[,"avg_logFC"]), ]
 
+# select gene for draw heatmap (top3 gene per each clusters)
 heatmap_features <- markerGenes_reordered %>%
   group_by(cluster) %>%
   top_n(n = 3, wt = avg_logFC)
 
+# various visualization method
 DoHeatmap(Seuratset, features = heatmap_features$gene)
 DimPlot(Seuratset, reduction = "pca", label = TRUE)
 DimPlot(Seuratset, reduction = "tsne", do.label = TRUE)
 DimPlot(Seuratset, reduction = "umap", do.label = TRUE)
 
-# Violin and Ridge plots
+# Violin and Ridge plots for express gene expression patterns
 VlnPlot(object = Seuratset, features = c("ENSG00000112486", "ENSG00000111796"), pt.size = 0)
 RidgePlot(object = Seuratset, features = c("ENSG00000112486", "ENSG00000111796"))
 Seuratset$groups <- Seuratset@active.ident
