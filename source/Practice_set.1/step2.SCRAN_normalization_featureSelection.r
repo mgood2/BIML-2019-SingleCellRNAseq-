@@ -1,9 +1,11 @@
 # filteredSCEset <- readRDS(file = paste(PATH_PBMC_dataset, "filteredSCEset.rds", sep = "/"))
 
+# filteredSCEset: QC completed dataset
 filteredSCEset <- sce[, which(sce$filtering==1)]
 
+# Normalization step
 library(scran)
-clusters <- quickCluster(filteredSCEset, method="igraph")
+clusters <- quickCluster(filteredSCEset, method="igraph") # for large dataset (usually number of cells > 1000)
 filteredSCEset <- computeSumFactors(filteredSCEset, cluster=clusters)
 filteredSCEset <- normalize(filteredSCEset)
 
@@ -14,6 +16,7 @@ colnames(filteredSCEset@assays$data$logcounts) <- colnames(filteredSCEset)
 #      ylab="Library size (kilo)", xlab = "Size factor")
 
 ### filtering genes
+# remove lowly expressed genes
 library(Matrix)
 # keep_feature <- rowMeans(filteredSCEset@assays$data$logcounts)!=0
 keep_feature <- rowSums((filteredSCEset@assays$data$logcounts) != 0) > 3
@@ -22,7 +25,7 @@ filteredSCEset <- filteredSCEset[keep_feature, ]
 ### Select Highly variable genes (feature selection)
 var.fit <- trendVar(filteredSCEset, parametric=TRUE, use.spikes=FALSE)#, design = batchDesign)
 var.out <- decomposeVar(filteredSCEset, var.fit)
-hvg <- var.out[which(var.out$FDR < 0.05 & var.out$bio > .01),]
+hvg <- var.out[which(var.out$FDR < 0.05 & var.out$bio > .01),] # var.out$bio means biological variance (from decomposition of total variance)
 dim(hvg)
 
 saveRDS(filteredSCEset, file = "filteredSCEset.rds")
