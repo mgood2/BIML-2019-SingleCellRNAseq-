@@ -9,6 +9,7 @@
 # install.packages("irlba")
 # install.packages("Seurat")
 
+# 1. load dataset (start from raw count matrix)
 PATH_PBMC_dataset = "/BiO/data/scRNAseq_dataset/PBMC_dataset/PBMC8k"
 
 library(SingleCellExperiment)
@@ -16,12 +17,13 @@ pbmc_rawcount <- readRDS(file = paste(PATH_PBMC_dataset, "pbmc8k_rawcount.rds", 
 sce <- SingleCellExperiment(assays = list(counts = pbmc_rawcount))
 rowData(sce)$ID <- rownames(sce@assays$data$counts)
 
+# 2. QC step (filtering emptydroplet)
 library(DropletUtils)
 set.seed(0)
 my.counts <- pbmc_rawcount
 br.out <- barcodeRanks(my.counts)
 
-# Making a plot.
+# Making a plot (confirm total umi count in each cells)
 plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total")
 o <- order(br.out$rank)
 lines(br.out$rank[o], br.out$fitted[o], col="red")
@@ -31,11 +33,12 @@ legend("bottomleft", lty=2, col=c("dodgerblue", "forestgreen"),
        legend=c("knee", "inflection"))
 
 
+# Filtering emptydroplet 
 set.seed(100)
 e.out <- emptyDrops(my.counts)
 is.cell <- e.out$FDR < 0.01
 sum(is.cell, na.rm=TRUE)
-sce <- sce[,which(e.out$FDR < 0.01)]
+sce <- sce[,which(e.out$FDR < 0.01)] # FDR threshold value is changeable
 
 bcrank <- barcodeRanks(counts(sce))
 
@@ -52,6 +55,7 @@ legend("bottomleft", legend=c("Inflection", "Knee"),
 
 
 ## Quality control on the cells ##
+# QC step (2nd QC)
 # MT gene QC
 library(scater)
 library(EnsDb.Hsapiens.v86)
@@ -84,6 +88,7 @@ hist(sce$pct_counts_Mito,
      breaks=100, col="grey80",
      xlab="Proportion of reads in mitochondrial genes")
 
+# outlier filtering by follow attributes: log10_total_counts, pct_counts_Mito, log10_total_features_by_counts
 filtering <- numeric()
 filtering[which(sce$log10_total_counts > 2 & sce$pct_counts_Mito <= 10 & sce$log10_total_features_by_counts > 2)] <- 1
 filtering[which(sce$log10_total_counts <= 2 | sce$pct_counts_Mito > 10 | sce$log10_total_features_by_counts <= 2)] <- 0
