@@ -10,12 +10,18 @@ Seuratset <- RunPCA(object = Seuratset, pc.genes = Seuratset@var.genes, do.print
 plot(Seuratset@dr$pca@sdev)
 Seuratset <- RunTSNE(Seuratset, dims.use = 1:PCA, do.fast = T, seed.use = 42, perplexity=100)
 Seuratset <- RunUMAP(object = Seuratset, reduction.use = "pca", dims.use = 1:PCA, min_dist = 0.75)
+
+# Clustering
 Seuratset <- FindClusters(Seuratset, reduction.type="pca", dims.use = 1:PCA, save.SNN = TRUE, force.recalc = TRUE)
+
+# Visualization: PCA, tSNE, UMAP ...
 
 PCAPlot(Seuratset)
 TSNEPlot(Seuratset, do.label = TRUE, pt.size = 0.05)
 DimPlot(Seuratset, reduction.use = "umap", do.label = TRUE)
 
+# cell type annotation
+# devtools::install_github('dviraran/SingleR')
 library(SingleR)
 singler = CreateSinglerSeuratObject(as.matrix(Seuratset@raw.data),
                                     project.name = "10X_PBMC",
@@ -25,12 +31,14 @@ singler = CreateSinglerSeuratObject(as.matrix(Seuratset@raw.data),
 
 
 
+##### subclustering analysis (optional)
 ##### Reculstering
 library(scater)
 subset_Seuratset <- SubsetData(Seuratset, ident.use = c(0:12,14))
 subset_sce <- Convert(from = subset_Seuratset, to = "sce")
 rownames(subset_sce) <- uniquifyFeatureNames(rowData(subset_sce)$gene, rowData(subset_sce)$Symbol)
 
+### Gene id converting (ensembl id to gene symbol)
 library(biomaRt)
 mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 genes <- rowData(subset_sce)$gene
@@ -42,6 +50,7 @@ rownames(subset_sce) <- uniquifyFeatureNames(rowData(subset_sce)$gene, rowData(s
 keep_feature <- rownames(subset_sce)[!grepl("ENSG", rownames(subset_sce))]
 subset_sce <- subset_sce[keep_feature, ]
 
+# you should select highly variable gene again with subset data for subclustering analysis
 library(scran)
 clusters <- quickCluster(subset_sce, method="igraph")
 subset_sce <- computeSumFactors(subset_sce, cluster=clusters)
@@ -65,8 +74,11 @@ Seuratset <- RunPCA(Seuratset, pcs.compute = PCA, weight.by.var = FALSE)
 plot(Seuratset@dr$pca@sdev)
 Seuratset <- RunTSNE(Seuratset, dims.use = 1:PCA, do.fast = T, seed.use = 42, perplexity=100)
 Seuratset <- RunUMAP(object = Seuratset, reduction.use = "pca", dims.use = 1:PCA, min_dist = 0.75)
+
+# Clustering
 Seuratset <- FindClusters(Seuratset, reduction.type="pca", dims.use = 1:PCA, save.SNN = TRUE, force.recalc = TRUE)
 
+# Visualization
 PCAPlot(Seuratset)
 TSNEPlot(Seuratset, do.label = TRUE, pt.size = 0.05)
 DimPlot(Seuratset, reduction.use = "umap", do.label = TRUE)
