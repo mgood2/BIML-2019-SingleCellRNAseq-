@@ -43,3 +43,27 @@ metadata_ordering <- Seuratset@meta.data[order(Seuratset@meta.data$clusters), ]
 library(pheatmap)
 pheatmap(z_scaled_expAUC.immunologic[, match(rownames(metadata_ordering), colnames(z_scaled_expAUC.immunologic))],
          labels_col = "", annotation_col = metadata_ordering[, 6:7], cluster_cols = FALSE)
+
+###### AUCell signature analysis with KEGG dataset
+
+cells_rankings <- AUCell_buildRankings(sceset@assays$data$logcounts)
+cells_AUC_immunologic_SigDB <- AUCell_calcAUC(Immunologic_genesets, cells_rankings)
+cells_AUC_kegg_SigDB <- AUCell_calcAUC(kegg_genesets, cells_rankings)
+
+expAUC.immunologic <- getAUC(cells_AUC_immunologic_SigDB)
+expAUC.kegg <- getAUC(cells_AUC_kegg_SigDB)
+
+z_scaled_expAUC.immunologic <- t(scale(t(expAUC.immunologic)))
+z_scaled_expAUC.kegg <- t(scale(t(expAUC.kegg)))
+
+library(scales)
+re_z_scaled_expAUC.kegg <- replace(z_scaled_expAUC.kegg, z_scaled_expAUC.kegg < -3, -3)
+re_z_scaled_expAUC.kegg <- replace(re_z_scaled_expAUC.kegg, re_z_scaled_expAUC.kegg > 3, 3)
+
+head(Seuratset@meta.data)
+Seuratset@meta.data$clusters <- Seuratset@ident
+metadata_ordering <- Seuratset@meta.data[order(Seuratset@meta.data$clusters), ]
+
+library(pheatmap)
+pheatmap(re_z_scaled_expAUC.kegg[50:150, match(rownames(metadata_ordering), colnames(re_z_scaled_expAUC.kegg))],
+         labels_col = "", annotation_col = metadata_ordering[, 6:7], cluster_cols = FALSE)
