@@ -16,7 +16,11 @@ pd <- new("AnnotatedDataFrame", data = trajectory_seurat@meta.data)
 fd <- new("AnnotatedDataFrame", data = gene_annotation)
 cds <- newCellDataSet(trajectory_seurat@raw.data, phenoData = pd, featureData = fd,
                       expressionFamily = negbinomial.size())
+
+# Size factors help us normalize for differences in mRNA recovered across cells
 cds <- estimateSizeFactors(cds)
+
+# "dispersion" values will help us perform differential expression analysis later
 cds <- estimateDispersions(cds)
 
 cds <- detectGenes(cds, min_expr = 0.1)
@@ -24,13 +28,7 @@ print(head(fData(cds)))
 expressed_genes <- row.names(subset(fData(cds), num_cells_expressed >= 5))
 
 set.seed(123)
-cds <- reduceDimension(cds, max_components = 2, num_dim = 15, norm_method = 'log',
-                       reduction_method = 'tSNE', verbose = T)
-
 cds$clusters <- trajectory_seurat@ident
-
-disp_table <- dispersionTable(cds)
-
 trajectory_sceset <- Convert(from = trajectory_seurat, to = "sce")
 
 ### Select Highly variable genes (feature selection)
@@ -70,39 +68,9 @@ ggplot(df_monocle2,
   ggtitle("Cells ordered by diffusion map pseudotime")
 
 
-identical(colnames(cds@reducedDimS), rownames(Seuratset@meta.data))
+# identical(colnames(cds@reducedDimS), rownames(Seuratset@meta.data))
 
-DimPlot(Seuratset, reduction.use = "umap", do.label = TRUE)
-
-library(ggplot2)
-library(dplyr)
-TGgene = "ENSG00000126353"
-TGgeneExpression = Seuratset@data[TGgene, ]
-tibble(x = Seuratset@dr$umap@cell.embeddings[,1],
-       y = Seuratset@dr$umap@cell.embeddings[,2],
-       TGgeneExpression = Seuratset@data[TGgene, ]) %>%
-  ggplot(aes(x=x, y=y, colour=TGgeneExpression)) +
-  geom_point(size=0.01) +
-  ggtitle("KLRB1") +
-  # scale_colour_gradientn(colours = rev(brewer.pal(11, "RdBu"))) +
-  # scale_colour_gradient(low = "grey", high = "red") +
-  scale_colour_gradientn(colours = rev(c("#300000", "red","#eeeeee")),
-                         breaks=c(0,max(TGgeneExpression)),
-                         labels=c(0,round(as.numeric(max(TGgeneExpression)), digits = 2))) +
-  ylab("Component 2") +
-  xlab("Component 1") +
-  theme_bw() +
-  theme(text = element_text(size=20),
-        panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.line=element_line(size=1),
-        axis.ticks=element_line(size=1),
-        # legend.text=element_text(size=10),
-        # legend.title=element_blank(),
-        # legend.key=element_blank(),
-        axis.text.x = element_text(size=10)
-  )
-
+# Gene expression pattern analysis with trajectory plot
 
 library(ggplot2)
 library(dplyr)
@@ -134,10 +102,11 @@ tibble(x = cds@reducedDimS[1,],
         axis.text.x = element_text(size=10)
   )
 
-
+# Differential expression analysis by pseudotime
 pseudotime_de <- differentialGeneTest(cds, fullModelFormulaStr = "~sm.ns(Pseudotime)", cores = 8)
-
 sig_gene_names <- row.names(subset(pseudotime_de, qval < 0.1))
+
+# Draw heamap with significant DEGs (by pseudotime)
 plot_pseudotime_heatmap(cds[sig_gene_names,],
                         num_clusters = 4,
                         cores = 1,
