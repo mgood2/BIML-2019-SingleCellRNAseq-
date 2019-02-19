@@ -1,6 +1,15 @@
 Data deposit 
 
-Data saved dropbox url: https://www.dropbox.com/sh/2bfu19d7ei9e72g/AADFleu0MmB8tsGwnD00Lsmna?dl=0
+Data saved dropbox url: https://www.dropbox.com/sh/g9hv6g1fybdzklt/AAAqi7Tz1wP7FC-KysEnjk3Ka?dl=0
 
 Dataset-1: PBMC8k
 Dataset-2: Memory T cell
+Dataset-3: PBMC4k (small scale set of PBMC)
+
+Publication of PBMC dataset: 
+Zheng, Grace XY, et al. "Massively parallel digital transcriptional profiling of single cells." Nature communications 8 (2017): 14049.
+url: https://www.nature.com/articles/ncomms14049 
+
+Publication of Memory T cell: 
+Li, Na, et al. "Memory CD4+ T cells are generated in the human fetal intestine." Nature immunology (2019): 1.
+url: https://www.nature.com/articles/s41590-018-0294-9
